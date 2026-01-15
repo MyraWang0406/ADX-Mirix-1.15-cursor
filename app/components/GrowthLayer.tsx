@@ -30,7 +30,7 @@ export default function GrowthLayer({ logs }: GrowthLayerProps) {
         attributionConfidences.push(confidence)
       }
       
-      const qFactor = log.q_factor || log.internal_variables?.q_factor
+      const qFactor = log.internal_variables?.q_factor
       if (qFactor !== undefined && qFactor !== null) {
         qualityScores.push(qFactor)
       }

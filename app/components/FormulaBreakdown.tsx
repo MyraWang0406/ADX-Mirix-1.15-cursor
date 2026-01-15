@@ -45,8 +45,8 @@ export default function FormulaBreakdown({ logs, selectedRequestId, highlightedP
   const pcvr = auctionLog?.pCVR || 
                bidLog?.pCVR || 
                bidLog?.internal_variables?.pcvr || 0
-  const qFactor = auctionLog?.internal_variables?.q_factor || 
-                 bidLog?.internal_variables?.q_factor || 1.0
+  const qFactor = (auctionLog?.internal_variables?.q_factor !== undefined ? auctionLog.internal_variables.q_factor : null) || 
+                 (bidLog?.internal_variables?.q_factor !== undefined ? bidLog.internal_variables.q_factor : null) || 1.0
   const ecpm = auctionLog?.eCPM || 
                (bidPrice && pctr && pcvr ? bidPrice * pctr * pcvr * qFactor * 1000 : 0)
 
