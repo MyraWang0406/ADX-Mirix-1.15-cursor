@@ -48,7 +48,7 @@ interface DiagnosticResult {
   }
   total_potential_loss?: number
   estimated_hourly_loss?: number
-  critical_alert?: boolean
+  // critical_alert 已移除，使用 total_potential_loss 代替
   total_logs_analyzed?: number
   message?: string
 }
