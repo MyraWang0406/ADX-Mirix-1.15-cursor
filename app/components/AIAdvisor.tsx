@@ -70,6 +70,7 @@ interface DiagnosticResult {
   anomalies?: Anomaly[]
   ai_suggestions?: AISuggestions
   total_logs_analyzed?: number
+  total_potential_loss?: number
   message?: string
 }
 
