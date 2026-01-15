@@ -238,7 +238,7 @@ export default function AIAdvisor() {
           <h3 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             异常检测
-            {diagnostic?.critical_alert && (
+             {diagnostic?.total_potential_loss && diagnostic.total_potential_loss > 100 && (
               <span className="ml-auto text-[10px] px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold animate-pulse">
                 ⚠️ 红色预警
               </span>
