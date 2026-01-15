@@ -246,7 +246,7 @@ export default function AIAdvisor() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {anomalies.map((anomaly, idx) => {
-              const isCritical = diagnostic?.critical_alert && idx === 0
+              const isCritical = diagnostic?.total_potential_loss && diagnostic.total_potential_loss > 100 && idx === 0
               
               // 移除P7/P8字样
               const cleanTitle = anomaly.title
