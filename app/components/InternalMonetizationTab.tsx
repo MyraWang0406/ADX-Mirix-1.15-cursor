@@ -166,9 +166,7 @@ export default function InternalMonetizationTab({
               {/* 中间：损耗漏斗 + 延迟分布（加宽5%，从4列改为5列） */}
               <div className="lg:col-span-5 space-y-3 md:space-y-4">
                 <FunnelChart data={funnelData} />
-                <div className="hidden md:block">
-                  <LatencyWinRateChart logs={logs} />
-                </div>
+                <LatencyWinRateChart logs={logs} />
               </div>
               
               {/* 右侧：策略建议（铺满剩余空间） */}
