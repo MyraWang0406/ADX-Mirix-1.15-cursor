@@ -1,0 +1,200 @@
+﻿'use client'
+
+import { useState, useMemo } from 'react'
+import { ShoppingCart, DollarSign } from 'lucide-react'
+import RealtimeStream from './RealtimeStream'
+import FunnelChart from './FunnelChart'
+import LatencyWinRateChart from './LatencyWinRateChart'
+import RevenueLossAnalyzer from './RevenueLossAnalyzer'
+import TopMetricsBar from './TopMetricsBar'
+import SmartStrategyCenter from './SmartStrategyCenter'
+import RegionHeatmap from './RegionHeatmap'
+import PrivacyEnvironmentDiagnostic from './PrivacyEnvironmentDiagnostic'
+import { WhiteboxTrace, FunnelData } from '../types'
+
+interface InternalMonetizationTabProps {
+  logs: WhiteboxTrace[]
+  selectedRequestId: string | null
+  onRequestClick: (requestId: string) => void
+  onRegionClick: (region: string | null) => void
+  selectedRegion: string | null
+}
+
+export default function InternalMonetizationTab({
+  logs,
+  selectedRequestId,
+  onRequestClick,
+  onRegionClick,
+  selectedRegion
+}: InternalMonetizationTabProps) {
+  const [activeSubTab, setActiveSubTab] = useState<'goods' | 'ads'>('ads')
+  
+  // 璁＄畻婕忔枟鏁版嵁
+  const funnelData: FunnelData = useMemo(() => {
+    const requestIds = new Set<string>()
+    const validIds = new Set<string>()
+    const bidIds = new Set<string>()
+    const winIds = new Set<string>()
+
+    logs.forEach((log: WhiteboxTrace) => {
+      requestIds.add(log.request_id)
+
+      if (log.node === 'SSP' && log.action === 'REQUEST_GENERATED') {
+        validIds.add(log.request_id)
+      }
+
+      if (log.node === 'DSP' && (log.action === 'BID_CALCULATION' || log.action === 'BID_SUBMITTED')) {
+        bidIds.add(log.request_id)
+      }
+
+      if (log.action === 'AUCTION_RESULT' || 
+          (log.node === 'ADX' && log.action === 'FINAL_DECISION' && log.decision === 'PASS')) {
+        winIds.add(log.request_id)
+      }
+    })
+
+    return {
+      request: requestIds.size,
+      valid: validIds.size,
+      bid: bidIds.size,
+      win: winIds.size
+    }
+  }, [logs])
+  
+  return (
+    <div className="h-full flex flex-col">
+      {/* 瀛?Tab 鍒囨崲 */}
+      <div className="flex border-b border-gray-200 bg-white mb-3 md:mb-4 rounded-t-lg overflow-x-auto">
+        <button
+          onClick={() => setActiveSubTab('goods')}
+          className={`flex items-center gap-1 md:gap-2 px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
+            activeSubTab === 'goods'
+              ? 'text-[#2563eb] border-b-2 border-[#2563eb] bg-blue-50'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <span className="hidden sm:inline">鍗栬揣锛堢敤鎴锋梾绋嬫紡鏂楋級</span>
+          <span className="sm:hidden">鍗栬揣</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('ads')}
+          className={`flex items-center gap-1 md:gap-2 px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
+            activeSubTab === 'ads'
+              ? 'text-[#2563eb] border-b-2 border-[#2563eb] bg-blue-50'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <span className="hidden sm:inline">鍗栧箍鍛婏紙绔炰环绯荤粺锛?/span>
+          <span className="sm:hidden">鍗栧箍鍛?/span>
+        </button>
+      </div>
+      
+      {/* 瀛?Tab 鍐呭 */}
+      <div className="flex-1 overflow-auto">
+        {activeSubTab === 'goods' ? (
+          // 鍗栬揣锛氱敤鎴锋梾绋嬫紡鏂楀強鍗＄偣
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 mb-4">鐢ㄦ埛鏃呯▼婕忔枟</h3>
+              <div className="space-y-3">
+                {[
+                  { stage: '鏇濆厜', count: 1000, rate: 100 },
+                  { stage: '鐐瑰嚮', count: 50, rate: 5 },
+                  { stage: '鐧诲綍', count: 30, rate: 3 },
+                  { stage: '娴忚', count: 25, rate: 2.5 },
+                  { stage: '鍔犺喘', count: 10, rate: 1 },
+                  { stage: '涓嬪崟', count: 5, rate: 0.5 },
+                  { stage: '鏀粯', count: 4, rate: 0.4 }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-4">
+                    <div className="w-20 text-sm font-medium text-gray-700">{item.stage}</div>
+                    <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
+                      <div 
+                        className="bg-blue-500 h-full flex items-center justify-end pr-2 text-white text-xs font-semibold transition-all"
+                        style={{ width: `${item.rate}%` }}
+                      >
+                        {item.count > 0 && item.rate > 2 && item.count}
+                      </div>
+                      {item.count > 0 && item.rate <= 2 && (
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-700">
+                          {item.count}
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-16 text-sm font-bold text-blue-700">{item.rate}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 mb-4">鍏抽敭鍗＄偣鍒嗘瀽</h3>
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="text-sm font-semibold text-red-800 mb-1">鐐瑰嚮鐜囧亸浣?/div>
+                  <div className="text-xs text-red-700">褰撳墠鐐瑰嚮鐜?5%锛屼綆浜庤涓氬潎鍊?8%锛屽缓璁紭鍖栫礌鏉愬垱鎰?/div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="text-sm font-semibold text-amber-800 mb-1">鐧诲綍杞寲鐜囦笅闄?/div>
+                  <div className="text-xs text-amber-700">鐧诲綍杞寲鐜囦粠 3.5% 涓嬮檷鑷?3%锛屽缓璁鏌ョ櫥褰曟祦绋?/div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm font-semibold text-blue-800 mb-1">鏀粯鎴愬姛鐜囪壇濂?/div>
+                  <div className="text-xs text-blue-700">鏀粯鎴愬姛鐜?80%锛岄珮浜庤涓氬潎鍊?75%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // 鍗栧箍鍛婏細鍘熷厛鎴浘涓殑鍐呭
+          <div className="space-y-3 md:space-y-4">
+            {/* 椤堕儴鎸囨爣鏍?*/}
+            <TopMetricsBar logs={logs} />
+            
+            {/* 涓诲竷灞€锛氬乏渚у疄鏃舵祦锛屼腑闂存紡鏂?寤惰繜锛屽彸渚х瓥鐣?*/}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
+              {/* 宸︿晶锛氬疄鏃朵氦鏄撴祦 */}
+              <div className="lg:col-span-3 bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm h-[400px] md:h-auto">
+                <RealtimeStream 
+                  logs={logs} 
+                  onRequestClick={onRequestClick}
+                />
+              </div>
+              
+              {/* 涓棿锛氭崯鑰楁紡鏂?+ 寤惰繜鍒嗗竷锛堝姞瀹?%锛屼粠4鍒楁敼涓?鍒楋級 */}
+              <div className="lg:col-span-5 space-y-3 md:space-y-4">
+                <FunnelChart data={funnelData} />
+                <LatencyWinRateChart logs={logs} />
+              </div>
+              
+              {/* 鍙充晶锛氱瓥鐣ュ缓璁紙閾烘弧鍓╀綑绌洪棿锛?*/}
+              <div className="lg:col-span-4 flex flex-col gap-3 md:gap-4">
+                {/* 闅愮鐜璇婃柇 - 鍚戜笂鍚搁《 */}
+                <div className="flex-shrink-0">
+                  <PrivacyEnvironmentDiagnostic logs={logs} />
+                </div>
+                {/* 绛栫暐娲炲療涓績 - 濉厖鍓╀綑绌洪棿 */}
+                <div className="flex-1 min-h-0">
+                  <SmartStrategyCenter 
+                    selectedRegion={selectedRegion}
+                    selectedRequestId={selectedRequestId}
+                    logs={logs}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* 绗簩琛岋細鏀跺叆鎹熻€楀垎鏋?+ 鍖哄煙鐑姏鍥?*/}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+              <RevenueLossAnalyzer logs={logs} />
+              <RegionHeatmap 
+                logs={logs} 
+                selectedRegion={selectedRegion}
+                onRegionClick={(region) => onRegionClick(region)}
+              />
+            </div>
+          </div>
+        )}
+      </div>

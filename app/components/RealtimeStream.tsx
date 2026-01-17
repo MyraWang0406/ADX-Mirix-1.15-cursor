@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Activity, CheckCircle, XCircle, Clock, TrendingUp, AlertCircle, DollarSign } from 'lucide-react'
@@ -232,6 +232,7 @@ interface RealtimeStreamProps {
 export default function RealtimeStream({ logs, onRequestClick }: RealtimeStreamProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [summaries, setSummaries] = useState<RequestSummary[]>([])
+  const [showAll, setShowAll] = useState<boolean>(false)
 
   useEffect(() => {
     // 按 request_id 分组，获取每个请求的摘要
@@ -303,8 +304,12 @@ export default function RealtimeStream({ logs, onRequestClick }: RealtimeStreamP
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
 
-    setSummaries(newSummaries.slice(0, 50)) // 只显示最新 50 条
+    setSummaries(newSummaries) // 保存所有数据
   }, [logs])
+
+  // 根据 showAll 决定显示的数据
+  const displayedSummaries = showAll ? summaries : summaries.slice(0, 8)
+  const hasMore = summaries.length > 8
 
   const toggleExpand = (requestId: string) => {
     const newExpanded = new Set(expandedIds)
@@ -365,7 +370,7 @@ export default function RealtimeStream({ logs, onRequestClick }: RealtimeStreamP
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {summaries.map((summary) => {
+            {displayedSummaries.map((summary) => {
               const isExpanded = expandedIds.has(summary.request_id)
               const requestLogs = logs.filter(l => l.request_id === summary.request_id)
               
@@ -497,10 +502,34 @@ export default function RealtimeStream({ logs, onRequestClick }: RealtimeStreamP
                 </div>
               )
             })}
+            {/* 折叠/展开按钮 */}
+            {hasMore && (
+              <div className="p-2 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 py-1.5 px-2 rounded hover:bg-gray-100 transition-colors"
+                >
+                  {showAll ? (
+                    <>
+                      <ChevronUp className="w-3.5 h-3.5" />
+                      <span>收起 ({summaries.length - 8} 条隐藏)</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span>展开更多 ({summaries.length - 8} 条)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   )
 }
+
+
+
 

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import { RefreshCw, TrendingUp, Zap, DollarSign } from 'lucide-react'
@@ -83,38 +83,120 @@ export default function Home() {
         const actualPaid = bidPrice * 0.8
         const savedAmount = Math.max(0.1, bidPrice - actualPaid)
 
-        const baseTime = timeOffset > 0 ? timeOffset : 1700000000000 // 固定基准时间
+        const baseTime = timeOffset > 0 ? timeOffset : 1700000000000
         const timestamp = new Date(baseTime - i * 1000).toISOString()
 
-        const nodeIndex = Math.floor(seededRandom(seed + 400) * 3)
-        const actionIndex = Math.floor(seededRandom(seed + 500) * 3)
-        const decisionSeed = seededRandom(seed + 600)
-
-        return {
+        // 生成多条日志来模拟完整的请求流程
+        const tracesForRequest: WhiteboxTrace[] = []
+        
+        // 1. SSP 请求生成日志（包含 latency_ms）
+        const sspLatency = 50 + seededRandom(seed + 800) * 150
+        tracesForRequest.push({
           request_id: requestId,
-          timestamp: timestamp,
-          node: ['SSP', 'DSP', 'ADX'][nodeIndex],
-          action: ['REQUEST_GENERATED', 'BID_SUBMITTED', 'AUCTION_RESULT'][actionIndex],
-          decision: decisionSeed > 0.3 ? 'PASS' : 'REJECT',
-          reason_code: decisionSeed > 0.3 ? 'ACCEPTED' : 'BID_BELOW_FLOOR',
-          internal_variables: {
-            bid_price: bidPrice,
-            pctr: pctr,
-            pcvr: pcvr,
-            q_factor: qFactor,
-            winner_bid: bidPrice,
-            actual_paid_price: actualPaid,
-            potential_loss: 0.5 + seededRandom(seed + 700) * 0.5
-          },
-          reasoning: '模拟数据',
+          timestamp: new Date(baseTime - i * 1000 - 300).toISOString(),
+          node: 'SSP',
+          action: 'REQUEST_GENERATED',
+          decision: 'PASS',
+          reason_code: 'NONE',
+          internal_variables: { latency_ms: sspLatency },
+          reasoning: '模拟SSP请求',
           pCTR: pctr,
           pCVR: pcvr,
           eCPM: ecpm,
           actual_paid_price: actualPaid,
-          saved_amount: savedAmount
-        }
-      })
+          saved_amount: savedAmount,
+          latency_ms: sspLatency
+        })
 
+        // 2. 延迟检查（约30%的请求会超时）
+        if (seededRandom(seed + 900) > 0.3) {
+          const latency = 100 + seededRandom(seed + 1000) * 100
+          tracesForRequest.push({
+            request_id: requestId,
+            timestamp: new Date(baseTime - i * 1000 - 200).toISOString(),
+            node: 'ADX',
+            action: 'LATENCY_CHECK',
+            decision: 'REJECT',
+            reason_code: 'LATENCY_TIMEOUT',
+            internal_variables: {
+              latency_ms: latency,
+              highest_potential_ecpm_loss: ecpm * (1 + seededRandom(seed + 1100) * 0.5)
+            },
+            reasoning: `模拟响应延迟 ${latency.toFixed(1)}ms 超过阈值 100ms`,
+            pCTR: pctr,
+            pCVR: pcvr,
+            eCPM: ecpm,
+            actual_paid_price: actualPaid,
+            saved_amount: savedAmount,
+            latency_ms: latency
+          })
+        } else {
+          // 3. DSP 出价日志
+          tracesForRequest.push({
+            request_id: requestId,
+            timestamp: new Date(baseTime - i * 1000 - 200).toISOString(),
+            node: 'DSP',
+            action: 'BID_SUBMITTED',
+            decision: 'PASS',
+            reason_code: 'NONE',
+            internal_variables: {
+              bid_price: bidPrice,
+              pctr: pctr,
+              pcvr: pcvr,
+              q_factor: qFactor
+            },
+            reasoning: '模拟DSP出价',
+            pCTR: pctr,
+            pCVR: pcvr,
+            eCPM: ecpm,
+            actual_paid_price: actualPaid,
+            saved_amount: savedAmount,
+            latency_ms: 50 + seededRandom(seed + 1200) * 50
+          })
+          
+          // 4. 最终决策（约40%的请求会中标）
+          if (seededRandom(seed + 1300) > 0.6) {
+            tracesForRequest.push({
+              request_id: requestId,
+              timestamp: new Date(baseTime - i * 1000 - 100).toISOString(),
+              node: 'ADX',
+              action: 'AUCTION_RESULT',
+              decision: 'PASS',
+              reason_code: 'ACCEPTED',
+              internal_variables: {
+                winner_bid: bidPrice,
+                winner_ecpm: ecpm
+              },
+              reasoning: '模拟竞价成功',
+              pCTR: pctr,
+              pCVR: pcvr,
+              eCPM: ecpm,
+              actual_paid_price: actualPaid,
+              saved_amount: savedAmount,
+              latency_ms: 50 + seededRandom(seed + 1400) * 50
+            })
+          } else {
+            tracesForRequest.push({
+              request_id: requestId,
+              timestamp: new Date(baseTime - i * 1000 - 100).toISOString(),
+              node: 'ADX',
+              action: 'FINAL_DECISION',
+              decision: 'REJECT',
+              reason_code: 'BID_BELOW_FLOOR',
+              internal_variables: {},
+              reasoning: '模拟出价低于底价',
+              pCTR: pctr,
+              pCVR: pcvr,
+              eCPM: ecpm,
+              actual_paid_price: actualPaid,
+              saved_amount: savedAmount,
+              latency_ms: 50 + seededRandom(seed + 1500) * 50
+            })
+          }
+        }
+        
+        return tracesForRequest
+      }).flat()
       setLogs(mockLogs)
       if (mounted) {
         setLastUpdate(new Date())
@@ -264,3 +346,6 @@ export default function Home() {
     </div>
   )
 }
+
+
+

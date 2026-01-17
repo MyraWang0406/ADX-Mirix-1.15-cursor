@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { Brain } from 'lucide-react'
@@ -204,7 +204,7 @@ export default function SmartStrategyCenter({ selectedRegion, selectedRequestId,
         )}
       </div>
 
-      <div className="space-y-1.5 text-[10px] flex-1 overflow-y-auto">
+      <div className="space-y-1.5 text-[10px] flex-1 overflow-y-auto max-h-[400px]">
         {/* 隐私环境诊断 */}
         {suggestions.some((s: string) => s.includes('隐私受限环境') || s.includes('SKAN')) && (
           <div className="mb-2 p-1.5 bg-blue-50 border border-blue-200 rounded">
