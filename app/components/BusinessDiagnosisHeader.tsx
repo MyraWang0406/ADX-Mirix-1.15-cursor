@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { AlertCircle, TrendingUp, Target, Users, DollarSign } from 'lucide-react'
+import { AlertCircle, Target } from 'lucide-react'
 import { WhiteboxTrace } from '../types'
 
 interface BusinessDiagnosisHeaderProps {
@@ -11,32 +11,32 @@ interface BusinessDiagnosisHeaderProps {
 export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeaderProps) {
   const diagnosis = useMemo(() => {
     // 计算关键指标
-    const totalRequests = new Set(logs.map(l => l.request_id)).size
-    const winCount = logs.filter(l => l.action === 'AUCTION_RESULT').length
-    const winRate = totalRequests > 0 ? (winCount / totalRequests * 100) : 0
-    
+    const totalRequests = new Set(logs.map((l) => l.request_id)).size
+    const winCount = logs.filter((l) => l.action === 'AUCTION_RESULT').length
+    const winRate = totalRequests > 0 ? (winCount / totalRequests) * 100 : 0
+
     // 计算总价值
     const totalEcpm = logs
-      .filter(l => l.eCPM && l.eCPM > 0)
+      .filter((l) => l.eCPM && l.eCPM > 0)
       .reduce((sum, l) => sum + (l.eCPM || 0), 0)
     const totalValue = totalEcpm / 1000
-    
+
     // 计算潜在损失
     const totalLoss = logs
-      .filter(l => l.internal_variables?.potential_loss && l.internal_variables.potential_loss > 0)
+      .filter((l) => l.internal_variables?.potential_loss && l.internal_variables.potential_loss > 0)
       .reduce((sum, l) => sum + (l.internal_variables?.potential_loss || 0), 0)
-    
+
     // 识别卡点
-    const timeoutCount = logs.filter(l => l.reason_code === 'LATENCY_TIMEOUT').length
-    const sizeMismatchCount = logs.filter(l => l.reason_code === 'SIZE_MISMATCH').length
-    const belowFloorCount = logs.filter(l => l.reason_code === 'BID_BELOW_FLOOR').length
-    
-    // 确定主要卡点
+    const timeoutCount = logs.filter((l) => l.reason_code === 'LATENCY_TIMEOUT').length
+    const sizeMismatchCount = logs.filter((l) => l.reason_code === 'SIZE_MISMATCH').length
+    const belowFloorCount = logs.filter((l) => l.reason_code === 'BID_BELOW_FLOOR').length
+
+    // 确定主要卡点（✅ 默认值不再为空）
     let mainBottleneck = '无'
-    let bottleneckReason = ''
-    let responsibleTeam = ''
-    let optimizationOwner = ''
-    
+    let bottleneckReason = '暂无明显关键卡点'
+    let responsibleTeam = '—'
+    let optimizationOwner = '—'
+
     if (timeoutCount > totalRequests * 0.2) {
       mainBottleneck = '响应延迟'
       bottleneckReason = '链路响应延迟超过阈值，导致竞价漏斗顶端折损'
@@ -58,11 +58,11 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
       responsibleTeam = '策略团队（出价模型优化）'
       optimizationOwner = '策略负责人'
     }
-    
+
     // 计算流量价值天花板（基于最高 eCPM）
-    const maxEcpm = Math.max(...logs.map(l => l.eCPM || 0).filter(v => v > 0), 0)
+    const maxEcpm = Math.max(...logs.map((l) => l.eCPM || 0).filter((v) => v > 0), 0)
     const valueCeiling = maxEcpm / 1000
-    
+
     return {
       totalRequests,
       winRate,
@@ -75,18 +75,19 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
       optimizationOwner,
       currentStatus: {
         winRate,
-        avgEcpm: totalRequests > 0 ? (totalEcpm / totalRequests / 1000) : 0,
-        lossRate: totalRequests > 0 ? (totalLoss / totalRequests) : 0
+        avgEcpm: totalRequests > 0 ? totalEcpm / totalRequests / 1000 : 0,
+        lossRate: totalRequests > 0 ? totalLoss / totalRequests : 0
       }
     }
   }, [logs])
-  
+
   return (
     <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200 p-4 mb-4">
       <div className="flex items-start gap-3 mb-3">
         <Target className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
           <h2 className="text-base font-bold text-gray-800 mb-2">业务问题定位诊断</h2>
+
           <div className="space-y-2 text-xs text-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
@@ -106,7 +107,7 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
                 <span className="text-green-600 font-bold ml-1">${diagnosis.valueCeiling.toFixed(2)}</span>
               </div>
             </div>
-            
+
             <div className="bg-white rounded p-2 border border-gray-200 mt-2">
               <div className="font-semibold text-gray-800 mb-1">当前现状：</div>
               <div className="grid grid-cols-3 gap-2 text-xs">
@@ -124,7 +125,7 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 rounded p-2 border border-amber-200 mt-2">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -134,13 +135,14 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-blue-50 rounded p-2 border border-blue-200 mt-2">
               <div className="font-semibold text-blue-800 mb-0.5">原因定位：</div>
               <div className="text-blue-700 text-xs">
                 通过白盒日志分析，问题定位在 <span className="font-bold">{diagnosis.mainBottleneck}</span> 环节，
                 建议 <span className="font-bold">{diagnosis.optimizationOwner}</span> 牵头优化，
-                预期可提升流量价值 <span className="font-bold">${(diagnosis.valueCeiling - diagnosis.currentStatus.avgEcpm).toFixed(2)}</span>
+                预期可提升流量价值{' '}
+                <span className="font-bold">${(diagnosis.valueCeiling - diagnosis.currentStatus.avgEcpm).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -149,5 +151,3 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
     </div>
   )
 }
-
-
