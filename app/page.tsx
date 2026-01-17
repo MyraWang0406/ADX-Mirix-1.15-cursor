@@ -57,12 +57,45 @@ export default function Home() {
   const fetchLogs = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/logs')
-      const data = await response.json()
-      setLogs(data.logs || [])
-      setLastUpdate(new Date())
+      // 静态导出模式：使用模拟数据
+      // 生成模拟的日志数据
+      const mockLogs: WhiteboxTrace[] = Array.from({ length: 50 }, (_, i) => {
+        const requestId = `req_${Date.now()}_${i}`
+        const bidPrice = 0.5 + Math.random() * 0.5
+        const pctr = 0.01 + Math.random() * 0.02
+        const pcvr = 0.03 + Math.random() * 0.04
+        const qFactor = 0.7 + Math.random() * 0.3
+        const ecpm = bidPrice * pctr * pcvr * qFactor * 1000
+        const actualPaid = bidPrice * 0.8
+        const savedAmount = Math.max(0.1, bidPrice - actualPaid)
+        
+        return {
+          request_id: requestId,
+          timestamp: new Date(Date.now() - i * 1000).toISOString(),
+          node: ['SSP', 'DSP', 'ADX'][Math.floor(Math.random() * 3)],
+          action: ['REQUEST_GENERATED', 'BID_SUBMITTED', 'AUCTION_RESULT'][Math.floor(Math.random() * 3)],
+          decision: Math.random() > 0.3 ? 'PASS' : 'REJECT',
+          reason_code: Math.random() > 0.3 ? 'ACCEPTED' : 'BID_BELOW_FLOOR',
+          internal_variables: {
+            bid_price: bidPrice,
+            pctr: pctr,
+            pcvr: pcvr,
+            q_factor: qFactor,
+            winner_bid: bidPrice,
+            actual_paid_price: actualPaid,
+            potential_loss: 0.5 + Math.random() * 0.5
+          },
+          reasoning: '模拟数据',
+          pCTR: pctr,
+          pCVR: pcvr,
+          eCPM: ecpm,
+          actual_paid_price: actualPaid,
+          saved_amount: savedAmount
+        }
+      })
       
-      // 数据已通过 API 路由强制填充默认值，确保无 $0.00
+      setLogs(mockLogs)
+      setLastUpdate(new Date())
     } catch (error) {
       console.error('Failed to fetch logs:', error)
     } finally {

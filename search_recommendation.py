@@ -219,3 +219,4 @@ class SearchRecommendationEngine:
         """计算内容的长效LTV贡献"""
         return content.get('ltv_contribution', 0.0)
 
+

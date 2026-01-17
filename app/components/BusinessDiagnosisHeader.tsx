@@ -150,3 +150,4 @@ export default function BusinessDiagnosisHeader({ logs }: BusinessDiagnosisHeade
   )
 }
 
+

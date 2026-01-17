@@ -37,9 +37,60 @@ export default function SmartStrategyCenter({ selectedRegion, selectedRequestId,
   const fetchDiagnostic = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/diagnose')
-      const data = await response.json()
-      setDiagnostic(data)
+      // 静态导出模式：使用模拟数据
+      const mockDiagnostic = {
+        status: 'success',
+        timestamp: new Date().toISOString(),
+        statistics: {
+          win_rate: 0.35,
+          win_stats: {
+            total_requests: 1000,
+            win_count: 350,
+            win_rate: 0.35
+          },
+          reject_analysis: {
+            total_rejects: 650,
+            distribution: {
+              'BID_BELOW_FLOOR': { count: 300, percentage: 46.2 },
+              'SIZE_MISMATCH': { count: 200, percentage: 30.8 },
+              'LATENCY_TIMEOUT': { count: 150, percentage: 23.1 }
+            }
+          }
+        },
+        anomalies: [
+          {
+            type: 'low_win_rate',
+            severity: 'medium',
+            title: '中标率偏低',
+            description: '当前中标率为 35%，低于行业平均水平',
+            details: { win_rate: 0.35 },
+            suggestion: '建议优化出价策略或提升流量质量'
+          }
+        ],
+        ai_suggestions: {
+          summary: '系统运行正常，建议持续监控关键指标',
+          suggestions: [
+            '优化出价策略以提升中标率',
+            '检查流量质量评分机制',
+            '监控延迟和超时情况'
+          ],
+          priority: 'medium'
+        },
+        structured_report: {
+          summary: '系统整体运行稳定，中标率有提升空间',
+          root_cause: '出价策略和流量质量需要优化',
+          economic_impact: '预计优化后可提升 15% 的收益',
+          action_items: [
+            '调整出价系数',
+            '优化流量筛选',
+            '监控关键指标'
+          ]
+        },
+        total_potential_loss: 125.5,
+        estimated_hourly_loss: 5.2,
+        total_logs_analyzed: 1000
+      }
+      setDiagnostic(mockDiagnostic)
     } catch (err) {
       console.error('Error fetching diagnostic:', err)
     } finally {

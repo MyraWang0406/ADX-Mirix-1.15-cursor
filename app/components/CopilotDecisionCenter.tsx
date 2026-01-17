@@ -172,3 +172,4 @@ function generateResponse(question: string, proposals: Proposal[]): string {
   return '感谢您的提问。基于当前系统状态和数据分析，建议的策略已经过模拟验证，预期能够带来正向收益。如需了解更多细节，请查看具体的策略提案。'
 }
 
+

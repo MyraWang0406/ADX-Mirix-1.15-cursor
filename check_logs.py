@@ -23,3 +23,4 @@ for log in auction_logs[:2]:
 
 
 
+

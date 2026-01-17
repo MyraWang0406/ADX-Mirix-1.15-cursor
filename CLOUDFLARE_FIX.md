@@ -105,3 +105,4 @@ wrangler pages deploy out --project-name=adx-mirix
 2. 联系 Cloudflare 支持
 3. 或者使用 Wrangler CLI 直接部署
 
+

@@ -11,17 +11,28 @@ interface SearchRecommendationFunnelProps {
   onNewAuthorBoostChange?: (enabled: boolean) => void
 }
 
-export default function SearchRecommendationFunnel({ logs, selectedRequestId, diversity, onNewAuthorBoostChange }: SearchRecommendationFunnelProps) {
+type StrategyWithCount = { name: string; count: number; matchRate?: number }
+type StrategyWithValue = { name: string; value: string }
+type Strategy = StrategyWithCount | StrategyWithValue
+
+const hasCount = (s: Strategy): s is StrategyWithCount => typeof (s as any)?.count === 'number'
+
+export default function SearchRecommendationFunnel({
+  logs,
+  selectedRequestId,
+  diversity,
+  onNewAuthorBoostChange
+}: SearchRecommendationFunnelProps) {
   const [newAuthorBoostEnabled, setNewAuthorBoostEnabled] = useState(false)
   const [hoveredFormula, setHoveredFormula] = useState(false)
-  
+
   const funnelData = useMemo(() => {
-    const requestLogs = selectedRequestId 
+    const requestLogs = selectedRequestId
       ? logs.filter(l => l.request_id === selectedRequestId)
       : logs
-    
+
     const funnelLog = requestLogs.find(l => l.action === 'FUNNEL_PROCESSING')
-    
+
     if (!funnelLog) {
       // 生成模拟数据
       return {
@@ -63,12 +74,12 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
         }
       }
     }
-    
+
     const internalVars = funnelLog.internal_variables || {}
     const recalled = internalVars.recalled_count || 100
     const ranked = internalVars.ranked_count || 80
     const reRanked = internalVars.re_ranked_count || 60
-    
+
     // 模拟各层详细数据
     return {
       recall: {
@@ -109,8 +120,21 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
       }
     }
   }, [logs, selectedRequestId, diversity])
-  
-  const layers = [
+
+  const layers: Array<{
+    id: string
+    name: string
+    icon: React.ReactNode
+    color: string
+    description: string
+    coreLogic?: string
+    strategies: Strategy[]
+    totalInput: number
+    totalOutput: number
+    passRate: number
+    metrics: Array<{ label: string; value: string }>
+    formula?: string
+  }> = [
     {
       id: 'recall',
       name: '召回层',
@@ -195,20 +219,23 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
       passRate: funnelData.reRank.passRate,
       metrics: [
         { label: '多样性', value: funnelData.reRank.diversity.toFixed(2) },
-        { label: '新作者曝光', value: `${(newAuthorBoostEnabled ? (funnelData.reRank.newAuthorExposure || 12) + 5 : (funnelData.reRank.newAuthorExposure || 12))}%` }
+        {
+          label: '新作者曝光',
+          value: `${(newAuthorBoostEnabled ? (funnelData.reRank.newAuthorExposure || 12) + 5 : (funnelData.reRank.newAuthorExposure || 12))}%`
+        }
       ]
     }
   ]
-  
+
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
         <Zap className="w-4 h-4 text-[#2563eb]" />
         <h3 className="text-sm font-bold text-[#2563eb]">搜推引擎四层漏斗（召回→粗排→精排→重排）</h3>
       </div>
-      
+
       <div className="flex-1 space-y-4 overflow-y-auto">
-        {layers.map((layer, idx) => (
+        {layers.map((layer) => (
           <div key={layer.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
             <div className="flex items-start gap-3 mb-3">
               <div className={`w-10 h-10 rounded-full ${layer.color} flex items-center justify-center text-white flex-shrink-0`}>
@@ -219,11 +246,13 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
                   <h4 className="text-sm font-bold text-gray-800">{layer.name}</h4>
                   <span className="text-xs text-gray-500">{layer.description}</span>
                 </div>
+
                 {layer.coreLogic && (
                   <div className="text-[10px] text-blue-600 bg-blue-50 rounded px-2 py-1 mb-2 inline-block">
                     核心逻辑：{layer.coreLogic}
                   </div>
                 )}
+
                 <div className="flex items-center gap-4 text-xs text-gray-600 mb-2">
                   <span>入参: {layer.totalInput} 条</span>
                   <ArrowRight className="w-3 h-3" />
@@ -232,22 +261,22 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
                     过滤率: {layer.passRate.toFixed(1)}%
                   </span>
                 </div>
-                
+
                 {/* 策略详情 */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-2">
                   {layer.strategies.map((strategy, sIdx) => (
                     <div key={sIdx} className="bg-white rounded p-2 border border-gray-200">
                       <div className="text-[10px] text-gray-600 mb-0.5">{strategy.name}</div>
                       <div className="text-xs font-bold text-gray-800">
-                        {strategy.count !== undefined ? `${strategy.count}条` : strategy.value}
-                        {strategy.matchRate !== undefined && (
+                        {hasCount(strategy) ? `${strategy.count}条` : strategy.value}
+                        {hasCount(strategy) && strategy.matchRate !== undefined && (
                           <span className="text-[10px] text-gray-500 ml-1">({strategy.matchRate}%)</span>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 {/* 指标 */}
                 <div className="flex items-center gap-3 text-xs">
                   {layer.metrics.map((metric, mIdx) => (
@@ -257,10 +286,10 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
                     </div>
                   ))}
                 </div>
-                
+
                 {/* 公式（仅精排层显示，支持悬停） */}
                 {layer.formula && (
-                  <div 
+                  <div
                     className="mt-2 bg-blue-50 rounded p-2 border border-blue-200 cursor-pointer transition-all"
                     onMouseEnter={() => setHoveredFormula(true)}
                     onMouseLeave={() => setHoveredFormula(false)}
@@ -276,7 +305,7 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
                     )}
                   </div>
                 )}
-                
+
                 {/* 新作者扶持开关（仅重排层显示） */}
                 {layer.id === 'reRank' && (
                   <div className="mt-2 bg-orange-50 rounded p-2 border border-orange-200">
@@ -317,4 +346,3 @@ export default function SearchRecommendationFunnel({ logs, selectedRequestId, di
     </div>
   )
 }
-

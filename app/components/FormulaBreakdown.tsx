@@ -1,3 +1,4 @@
+const isFlashing = false;
 'use client'
 
 import { useState } from 'react'

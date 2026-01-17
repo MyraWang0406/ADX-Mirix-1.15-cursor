@@ -16,7 +16,7 @@ interface InternalMonetizationTabProps {
   logs: WhiteboxTrace[]
   selectedRequestId: string | null
   onRequestClick: (requestId: string) => void
-  onRegionClick: (region: string) => void
+  onRegionClick: (region: string | null) => void
   selectedRegion: string | null
 }
 
@@ -194,7 +194,7 @@ export default function InternalMonetizationTab({
               <RegionHeatmap 
                 logs={logs} 
                 selectedRegion={selectedRegion}
-                onRegionClick={onRegionClick}
+                onRegionClick={(region) => onRegionClick(region)}
               />
             </div>
           </div>
@@ -203,4 +203,3 @@ export default function InternalMonetizationTab({
     </div>
   )
 }
-
