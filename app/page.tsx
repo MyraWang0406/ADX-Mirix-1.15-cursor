@@ -54,28 +54,47 @@ export default function Home() {
     }
   }, [logs])
 
+  // 稳定的伪随机数生成器（基于种子，确保服务端和客户端一致）
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000
+    return x - Math.floor(x)
+  }
+
   const fetchLogs = async () => {
     setIsLoading(true)
     try {
       // 静态导出模式：使用模拟数据
-      // 生成模拟的日志数据
+      // 使用稳定的种子确保服务端和客户端数据一致
+      const baseSeed = 12345 // 固定种子
+      const timeOffset = mounted ? Date.now() : 0 // 只在客户端使用时间
+      
+      // 生成模拟的日志数据（使用稳定的伪随机数）
       const mockLogs: WhiteboxTrace[] = Array.from({ length: 50 }, (_, i) => {
-        const requestId = `req_${Date.now()}_${i}`
-        const bidPrice = 0.5 + Math.random() * 0.5
-        const pctr = 0.01 + Math.random() * 0.02
-        const pcvr = 0.03 + Math.random() * 0.04
-        const qFactor = 0.7 + Math.random() * 0.3
+        const seed = baseSeed + i
+        const requestId = `req_${baseSeed}_${i}`
+        const bidPrice = 0.5 + seededRandom(seed) * 0.5
+        const pctr = 0.01 + seededRandom(seed + 100) * 0.02
+        const pcvr = 0.03 + seededRandom(seed + 200) * 0.04
+        const qFactor = 0.7 + seededRandom(seed + 300) * 0.3
         const ecpm = bidPrice * pctr * pcvr * qFactor * 1000
         const actualPaid = bidPrice * 0.8
         const savedAmount = Math.max(0.1, bidPrice - actualPaid)
         
+        // 使用稳定的时间戳（基于索引而非当前时间）
+        const baseTime = timeOffset > 0 ? timeOffset : 1700000000000 // 固定基准时间
+        const timestamp = new Date(baseTime - i * 1000).toISOString()
+        
+        const nodeIndex = Math.floor(seededRandom(seed + 400) * 3)
+        const actionIndex = Math.floor(seededRandom(seed + 500) * 3)
+        const decisionSeed = seededRandom(seed + 600)
+        
         return {
           request_id: requestId,
-          timestamp: new Date(Date.now() - i * 1000).toISOString(),
-          node: ['SSP', 'DSP', 'ADX'][Math.floor(Math.random() * 3)],
-          action: ['REQUEST_GENERATED', 'BID_SUBMITTED', 'AUCTION_RESULT'][Math.floor(Math.random() * 3)],
-          decision: Math.random() > 0.3 ? 'PASS' : 'REJECT',
-          reason_code: Math.random() > 0.3 ? 'ACCEPTED' : 'BID_BELOW_FLOOR',
+          timestamp: timestamp,
+          node: ['SSP', 'DSP', 'ADX'][nodeIndex],
+          action: ['REQUEST_GENERATED', 'BID_SUBMITTED', 'AUCTION_RESULT'][actionIndex],
+          decision: decisionSeed > 0.3 ? 'PASS' : 'REJECT',
+          reason_code: decisionSeed > 0.3 ? 'ACCEPTED' : 'BID_BELOW_FLOOR',
           internal_variables: {
             bid_price: bidPrice,
             pctr: pctr,
@@ -83,7 +102,7 @@ export default function Home() {
             q_factor: qFactor,
             winner_bid: bidPrice,
             actual_paid_price: actualPaid,
-            potential_loss: 0.5 + Math.random() * 0.5
+            potential_loss: 0.5 + seededRandom(seed + 700) * 0.5
           },
           reasoning: '模拟数据',
           pCTR: pctr,
@@ -95,7 +114,9 @@ export default function Home() {
       })
       
       setLogs(mockLogs)
-      setLastUpdate(new Date())
+      if (mounted) {
+        setLastUpdate(new Date())
+      }
     } catch (error) {
       console.error('Failed to fetch logs:', error)
     } finally {
@@ -103,18 +124,21 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    fetchLogs()
-    const interval = setInterval(fetchLogs, 2000) // 每 2 秒轮询一次
-    return () => clearInterval(interval)
-  }, [])
-
   const [mounted, setMounted] = useState(false)
   const [formattedLastUpdate, setFormattedLastUpdate] = useState('')
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    // 只在客户端挂载后才获取数据，避免 hydration mismatch
+    if (mounted) {
+      fetchLogs()
+      const interval = setInterval(fetchLogs, 2000) // 每 2 秒轮询一次
+      return () => clearInterval(interval)
+    }
+  }, [mounted])
 
   useEffect(() => {
     if (mounted && lastUpdate) {

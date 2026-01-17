@@ -31,9 +31,10 @@ export default function DecisionCenter({ selectedRequestId, logs = [] }: Decisio
     setIsLoading(true)
     try {
       // 静态导出模式：使用模拟数据
+      // 使用固定的时间戳避免 hydration mismatch
       const mockDiagnostic = {
         status: 'success',
-        timestamp: new Date().toISOString(),
+        timestamp: typeof window !== 'undefined' ? new Date().toISOString() : '2024-01-15T00:00:00.000Z',
         statistics: {
           win_rate: 0.35,
           win_stats: {
