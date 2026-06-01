@@ -1,311 +1,300 @@
-## 🧠 Research Positioning
+# ADX-Mirix: White-Box Ad Exchange Simulator for Traceable Decision Diagnosis
 
-**Research Problem:**
-Programmatic advertising systems (ADX/SSP/DSP) make thousands of filtering and bidding decisions per second, but these decisions are nearly invisible to operators. When win rates drop or revenue anomalies appear, diagnosing the cause requires manually correlating logs across multiple system layers — a process that is slow, expertise-dependent, and rarely leaves a traceable decision record.
+ADX-Mirix is a white-box ad exchange simulator for studying traceable decision diagnosis in automated advertising workflows.
 
-**Research Question:**
+The research focus is not the advertising interface itself. The focus is how operators can inspect filtering, bidding, win/loss, and diagnostic decisions in a complex automated system.
+
+## Project Information
+
+| Item | Description |
+|---|---|
+| Status | Research prototype |
+| Repository | https://github.com/MyraWang0406/ADX-Mirix-1.15-cursor |
+| Live Demo | https://adx.mirix.myrawzm0406.online/ |
+| Research Area | Human-AI Collaboration, Decision Traceability, AI-Assisted Diagnosis, Operational Workflows |
+| Main Methods | White-box logging, simulated ADX workflow, anomaly detection, LLM-assisted diagnosis |
+| Intended Use | Research demonstration, not production deployment |
+
+## Research Positioning
+
+Programmatic advertising systems such as ADX, SSP, and DSP pipelines make many filtering and bidding decisions. Operators often see the final metrics, but they do not easily see why requests were filtered, why bids failed, or why win rates changed.
+
+When win rates drop or revenue anomalies appear, diagnosis usually requires manually correlating logs across multiple system layers. This process is slow, expertise-dependent, and rarely produces a reusable decision trace.
+
+This prototype explores how AI-assisted diagnosis can make automated system decisions more inspectable.
+
+## Research Question
+
 How can an AI diagnostic agent surface the reasoning behind automated system decisions in real time, enabling operators to trace, explain, and act on decision failures without deep engineering expertise?
 
-**Overarching research thread:**
-> AI-assisted decision traceability — here applied to automated system workflows: the same "evidence → decision → inspectable trace" principle from [UserResearchAgent-CF](https://github.com/MyraWang0406/UserResearchAgent-CF), applied to programmatic ad exchange decisions rather than organizational requirements
+## Core Design Idea
 
-**Relation to other prototypes:**
-- Shares the "no diagnosis without traceable evidence chain" principle with [UserResearchAgent-CF](https://github.com/MyraWang0406/UserResearchAgent-CF)
-- The whitebox log format is a domain-specific instantiation of "evidence-backed decision trace"
+Traditional ADX workflows are often black-box from the operator’s perspective.
 
-**Informal evaluation:**
-Sprint 1–3 implemented and tested with simulated traffic. AI diagnostic agent tested against four anomaly patterns (low win rate, size mismatch, floor price filtering, blocklist filtering).
+This prototype makes the workflow white-box:
 
-**Limitations:**
-- Simulated traffic only; not validated against real ADX production data
-- Anomaly thresholds (e.g., win rate < 10%) are heuristic, not learned from data
-- LLM diagnostic suggestions not formally evaluated for accuracy or operator utility
-- No user study with actual ad operations professionals
-
----
-
-# 白盒化广告交易模拟工厂
-
-Mintegral 风格的白盒化广告交易系统，包含后端模拟引擎和前端可视化看板。
-
-## 核心设计思路
-
-传统 ADX 系统是黑盒的——你知道结果，但不知道为什么。这个项目的核心是**白盒化**：每一个决策点（过滤、出价、竞胜）都注入详细的追踪日志，让 AI 诊断 Agent 和操作人员都能看到完整的决策链路。
-
-```
-SSP 流量 → ADX 过滤 → DSP 出价 → 竞价结果
-              ↓
-         whitebox.log（每个决策点完整记录）
-              ↓
-         AI 诊断 Agent（异常检测 + LLM 建议）
-              ↓
-         可视化看板（损耗漏斗 + 决策链路追踪）
+```text
+SSP traffic
+→ ADX filtering
+→ DSP bidding
+→ auction result
+→ whitebox.log
+→ AI diagnostic agent
+→ visual diagnosis dashboard
 ```
 
-## 项目结构
+Every decision point is logged. The AI diagnostic agent and the operator can inspect the same evidence chain.
 
+## System Overview
+
+The system simulates an advertising exchange workflow with three major parts:
+
+1. Backend transaction simulation
+2. White-box decision logging
+3. Frontend diagnosis dashboard
+
+The AI diagnostic agent reads `whitebox.log`, detects anomaly patterns, and generates operator-facing suggestions.
+
+## Core Features
+
+### Backend: Transaction Engine
+
+- SSP traffic request simulation
+- ADX filtering logic
+- floor price filtering
+- blocklist filtering
+- size matching
+- DSP bidding strategy
+- CTR-based bid calculation
+- win/loss simulation
+- white-box logging at each decision point
+
+### Frontend: Diagnosis Dashboard
+
+- real-time transaction stream
+- request-to-win loss funnel
+- failed request inspection
+- decision-chain view
+- natural-language translation of reason codes
+- operator-facing diagnostic summary
+
+### AI Diagnostic Agent
+
+- periodic analysis of `whitebox.log`
+- anomaly pattern detection
+- win-rate diagnosis
+- size mismatch warning
+- floor price filtering warning
+- blocklist filtering warning
+- LLM-assisted suggestions
+- rule-based fallback when no API key is configured
+
+## Example Anomaly Patterns
+
+| Pattern | Signal | Possible Diagnosis |
+|---|---|---|
+| Low win rate | Win rate below threshold | Competition pressure or weak bid strategy |
+| Size mismatch | High share of rejected requests | Creative inventory mismatch |
+| Floor price filtering | Many requests filtered by floor price | Floor price may be too high |
+| Blocklist filtering | High share of blocklist rejection | Targeting or policy constraints may be too strict |
+
+## Research Contribution
+
+This prototype applies the same evidence-to-decision-trace principle from requirements and user research workflows to automated advertising systems.
+
+The contribution is not a production ADX engine. The research value is the traceable diagnosis workflow:
+
+```text
+system event
+→ decision rule
+→ logged reason
+→ anomaly pattern
+→ AI explanation
+→ operator action
 ```
-.
-├── schemas.py          # 数据协议定义
-├── engine.py           # 核心交易引擎 (SSP/ADX/DSP)
-├── main.py             # 后端模拟运行入口
-├── whitebox.log        # 白盒日志文件
-└── app/                # Next.js 前端应用
-    ├── api/logs/        # API Route 读取日志
-    ├── components/      # React 组件
-    └── page.tsx         # 主页面
+
+This makes invisible filtering and bidding decisions inspectable.
+
+## Relation to Other Prototypes
+
+This project is part of my broader research portfolio on traceable AI-assisted decision-making.
+
+- `UserResearchAgent-CF` applies evidence citation and memory recall to requirements decisions.
+- `ADX-Mirix` applies evidence-backed decision traces to automated advertising workflows.
+- `PSM-DID-uplift` focuses on causal reasoning for traffic attribution and operational analytics.
+- `Auto-sentiment-copilot-V1` applies evidence traceability to crowd feedback and requirement-signal extraction.
+
+The shared design principle is:
+
+> no diagnosis without traceable evidence.
+
+## Repository Structure
+
+```text
+ADX-Mirix-1.15-cursor/
+├── schemas.py           # Data schema definitions
+├── engine.py            # Core transaction engine
+├── main.py              # Backend simulation entry
+├── whitebox.log         # White-box decision log
+├── agent.py             # AI diagnostic agent
+├── test_agent.py        # Agent test script
+├── app/                 # Next.js frontend app
+│   ├── api/logs/        # API route for reading logs
+│   ├── api/diagnose/    # API route for diagnosis
+│   ├── components/      # React components
+│   └── page.tsx         # Main dashboard page
+└── package.json         # Frontend dependencies
 ```
 
-## 功能特性
+## Quick Start
 
-### 后端 (Sprint 1) — 交易引擎
-- SSP 流量发起模拟
-- ADX 过滤逻辑（底价、黑名单、尺寸匹配）
-- DSP 出价策略（CTR 基础出价公式）
-- 白盒日志注入（每个决策点详细记录）
-
-### 前端 (Sprint 2) — 可视化看板
-- 实时交易流（最新交易简报）
-- 损耗漏斗图（Request → Valid → Bid → Win）
-- 白盒排查区（点击失败请求查看完整决策链路）
-- 自然语言翻译 reason_code
-- 深色主题 UI（Datadog/Grafana 风格）
-
-### AI 诊断 Agent (Sprint 3) — 自动异常检测
-- 定期分析 whitebox.log 日志
-- 异常检测规则：
-  - 中标率 < 10% → 竞争激烈分析
-  - 尺寸不匹配 > 30% → 素材问题警告
-  - 底价过滤 > 50% → 底价设置过高警告
-  - 黑名单过滤 > 20% → 黑名单过滤提示
-- LLM 集成（支持 GPT-4o；无 API Key 时使用规则模拟）
-- AI 专家建议卡片（问题总结、操作建议、优先级）
-
-## 快速开始
+Generate white-box logs:
 
 ```bash
-# 生成白盒日志
-python main.py
-
-# 安装前端依赖并启动
-npm install
-npm run dev
-```
-
-访问 http://localhost:3000 查看可视化看板。
-
-## 技术栈
-
-**后端:** Python 3.8+ · 标准库（dataclasses, json, datetime）  
-**前端:** Next.js 14 · React 18 · TypeScript · Tailwind CSS
-
-## Research Fit
-
-`human-AI collaboration` · `decision traceability` · `AI-assisted diagnosis` · `organizational workflows` · `explainable AI`
-
-
-
-
-
-
-
-
-
-
-
-# 白盒化广告交易模拟工厂
-
-Mintegral 风格的白盒化广告交易系统，包含后端模拟引擎和前端可视化看板。
-
-## 项目结构
-
-```
-.
-├── schemas.py          # 数据协议定义
-├── engine.py           # 核心交易引擎 (SSP/ADX/DSP)
-├── main.py             # 后端模拟运行入口
-├── whitebox.log        # 白盒日志文件
-├── app/                # Next.js 前端应用
-│   ├── api/logs/       # API Route 读取日志
-│   ├── components/     # React 组件
-│   └── page.tsx        # 主页面
-└── package.json        # 前端依赖
-```
-
-## 快速开始
-
-### 1. 运行后端模拟
-
-```bash
-# 生成白盒日志
 python main.py
 ```
 
-这将生成 `whitebox.log` 文件，包含所有决策点的详细追踪信息。
-
-### 2. 启动前端看板
+Install frontend dependencies:
 
 ```bash
-# 安装依赖
 npm install
+```
 
-# 启动开发服务器
+Start development server:
+
+```bash
 npm run dev
 ```
 
-访问 http://localhost:3000 查看可视化看板。
+Open:
 
-## 功能特性
-
-### 后端 (Sprint 1)
-- ✅ SSP 流量发起模拟
-- ✅ ADX 过滤逻辑（底价、黑名单、尺寸匹配）
-- ✅ DSP 出价策略（CTR 基础出价公式）
-- ✅ 白盒日志注入（每个决策点详细记录）
-- ✅ 可扩展的面向对象设计
-
-### 前端 (Sprint 2)
-- ✅ 实时交易流（侧边栏显示最新交易简报）
-- ✅ 损耗漏斗图（Request -> Valid -> Bid -> Win）
-- ✅ 白盒排查区（点击失败请求查看详细决策链路）
-- ✅ 自然语言翻译 reason_code
-- ✅ 深色主题 UI（类似 Datadog/Grafana）
-- ✅ 响应式设计
-
-### AI 诊断 Agent (Sprint 3)
-- ✅ 定期分析 whitebox.log 日志
-- ✅ 异常检测：
-  - 中标率 < 10% → "竞争激烈"分析
-  - 尺寸不匹配占比 > 30% → "素材问题"警告
-  - 底价过滤占比 > 50% → "底价设置过高"警告
-  - 黑名单过滤占比 > 20% → "黑名单过滤较多"提示
-- ✅ LLM 集成（支持 GPT-4o，无 API Key 时使用智能模拟）
-- ✅ AI 专家建议卡片（显示问题总结、操作建议、优先级）
-
-## 技术栈
-
-### 后端
-- Python 3.8+
-- 标准库（dataclasses, json, datetime）
-
-### 前端
-- Next.js 14
-- React 18
-- TypeScript
-- Tailwind CSS
-- Lucide React（图标）
-
-## API 接口
-
-### GET /api/logs
-
-读取 `whitebox.log` 的最后 100 行。
-
-**响应:**
-```json
-{
-  "logs": [...],
-  "total": 100,
-  "timestamp": "2026-01-15T10:14:45.000Z"
-}
+```text
+http://localhost:3000
 ```
 
-### GET /api/diagnose
+## AI Diagnostic Agent Configuration
 
-执行 AI 诊断分析，返回异常检测结果和智能建议。
+The system can run with either LLM-assisted diagnosis or rule-based fallback.
 
-**响应:**
-```json
-{
-  "status": "success",
-  "timestamp": "2026-01-15T10:24:42.981670",
-  "statistics": {
-    "win_rate": 60.0,
-    "win_stats": {...},
-    "reject_analysis": {...}
-  },
-  "anomalies": [...],
-  "ai_suggestions": {
-    "summary": "...",
-    "suggestions": ["建议：..."],
-    "priority": "中"
-  },
-  "total_logs_analyzed": 44
-}
-```
-
-## AI 诊断 Agent 配置
-
-### 使用 OpenAI API（可选）
-
-如果要使用真实的 GPT-4o API，设置环境变量：
+To use OpenAI API:
 
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
-或者在 `.env.local` 文件中设置：
+Or create `.env.local`:
 
-```
+```text
 OPENAI_API_KEY=your-api-key-here
 ```
 
-**注意**：如果不设置 API Key，系统会使用智能模拟响应，基于检测到的异常类型生成合理的建议。
+If no API key is configured, the system uses rule-based simulated responses based on detected anomaly types.
 
-### 测试 Agent
+Test the agent:
 
 ```bash
 python test_agent.py
 ```
 
-## 开发说明
+## API Endpoints
 
-### 添加新的过滤规则
+### `GET /api/logs`
 
-继承 `FilterRule` 基类：
+Reads recent entries from `whitebox.log`.
+
+Example response:
+
+```json
+{
+  "logs": [],
+  "total": 100,
+  "timestamp": "2026-01-15T10:14:45.000Z"
+}
+```
+
+### `GET /api/diagnose`
+
+Runs AI-assisted diagnosis over recent logs.
+
+Example response:
+
+```json
+{
+  "status": "success",
+  "statistics": {
+    "win_rate": 60.0,
+    "win_stats": {},
+    "reject_analysis": {}
+  },
+  "anomalies": [],
+  "ai_suggestions": {
+    "summary": "...",
+    "suggestions": ["..."],
+    "priority": "medium"
+  }
+}
+```
+
+## Extending the Simulator
+
+### Add a new filtering rule
 
 ```python
 class CustomFilter(FilterRule):
-    def apply(self, request_id: str, ad_request: Dict) -> Tuple[bool, str, Dict]:
-        # 实现过滤逻辑
+    def apply(self, request_id: str, ad_request: dict):
+        # implement filtering logic
         pass
 ```
 
-### 添加新的出价策略
-
-继承 `BiddingStrategy` 基类：
+### Add a new bidding strategy
 
 ```python
 class CustomBiddingStrategy(BiddingStrategy):
-    def calculate_bid(self, request_id: str, ad_request: Dict) -> Tuple[float, Dict, str]:
-        # 实现出价逻辑
+    def calculate_bid(self, request_id: str, ad_request: dict):
+        # implement bidding logic
         pass
 ```
 
-### 添加新的异常检测规则
+### Add a new anomaly detection rule
 
-在 `agent.py` 的 `detect_anomalies` 方法中添加：
+Add a new rule in the diagnostic agent’s anomaly detection logic.
 
 ```python
-def detect_anomalies(self, logs: List[WhiteboxTrace]) -> List[Dict]:
+def detect_anomalies(self, logs):
     anomalies = []
-    # ... 现有检测逻辑 ...
-    
-    # 添加新规则
-    if your_condition:
-        anomalies.append({
-            'type': 'YOUR_ANOMALY_TYPE',
-            'severity': 'high',
-            'title': '问题标题',
-            'description': '问题描述',
-            'details': {...},
-            'suggestion': '建议措施'
-        })
-    
+    # add custom anomaly detection logic here
     return anomalies
 ```
 
-## 许可证
+## Informal Evaluation
 
-MIT
+The prototype has been tested with simulated traffic across several anomaly patterns:
 
+- low win rate
+- size mismatch
+- floor price filtering
+- blocklist filtering
+
+The diagnostic agent was tested against these simulated patterns, but no formal user study has been conducted.
+
+## Current Limitations
+
+- Simulated traffic only; not validated against real ADX production data.
+- Anomaly thresholds are heuristic and not learned from historical data.
+- LLM diagnostic suggestions have not been formally evaluated for accuracy or operator utility.
+- No user study with actual ad operations professionals has been conducted.
+- The simulator simplifies real ADX / SSP / DSP market complexity.
+
+## Research Fit
+
+`human-AI collaboration` · `decision traceability` · `AI-assisted diagnosis` · `organizational workflows` · `explainable AI` · `advertising systems`
+
+## Status and Scope
+
+This repository is a research prototype. It is intended to demonstrate how white-box logs and AI-assisted diagnosis can make automated system decisions inspectable.
+
+It is not a production advertising exchange system.
+
+## License
+
+This repository is for research and portfolio demonstration purposes.
